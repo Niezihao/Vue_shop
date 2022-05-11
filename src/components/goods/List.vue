@@ -73,6 +73,39 @@
         background
       >
       </el-pagination>
+
+      <!-- 编辑 -->
+      <el-dialog
+        title="商品列表编辑"
+        :visible.sync="editdialogVisible"
+        width="50%"
+        @close="editdialogclosed"
+      >
+        <!-- 添加参数 -->
+        <el-form
+          ref="editFormRef"
+          :model="editForm"
+          label-width="100px"
+          :rules="editFormRules"
+        >
+          <el-form-item label="商品名称" prop="goods_name"
+            ><el-input v-model="editForm.goods_name"></el-input
+          ></el-form-item>
+          <el-form-item label="商品价格" prop="goods_price"
+            ><el-input v-model="editForm.goods_price"></el-input
+          ></el-form-item>
+          <el-form-item label="商品数量" prop="goods_number"
+            ><el-input v-model="editForm.goods_number"></el-input
+          ></el-form-item>
+          <el-form-item label="商品重量" prop="goods_weight"
+            ><el-input v-model="editForm.goods_weight"></el-input
+          ></el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="editdialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="editParams">确 定</el-button>
+        </span>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -89,6 +122,27 @@ export default {
 
       total: null,
       goodList: [],
+      editdialogVisible: false,
+      editForm: {
+        goods_name: '',
+        goods_price: null,
+        goods_number: null,
+        goods_weight: null,
+      },
+      editFormRules: {
+        goods_name: [
+          { required: true, message: '请输入商品名称', trigger: 'blur' },
+        ],
+        goods_price: [
+          { required: true, message: '请输入商品价格', trigger: 'blur' },
+        ],
+        goods_number: [
+          { required: true, message: '请输入商品数量', trigger: 'blur' },
+        ],
+        goods_weight: [
+          { required: true, message: '请输入商品重量', trigger: 'blur' },
+        ],
+      },
     }
   },
   created() {
@@ -118,7 +172,36 @@ export default {
       // this.params.pagenum = parseInt(res.data.pagenum)
       this.total = res.data.total
     },
-    handleEdit(row) {},
+    editdialogclosed() {
+      this.$refs.editFormRef.resetFields()
+    },
+    async handleEdit(row) {
+      this.editdialogVisible = true
+      // console.log(row)
+      const { data: res } = await this.$http.get(`goods/${row.goods_id}`)
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取该行数据失败！')
+      }
+      this.editForm = res.data
+      console.log(res.data)
+    },
+    editParams() {
+      this.$refs.editFormRef.validate(async (valid) => {
+        if (!valid) return
+        const { data: res } = await this.$http.put(
+          `goods/${this.editForm.goods_id}`,
+          this.editForm
+        )
+        if (res.meta.status !== 200) {
+          return this.$message.error('编辑失败！')
+        }
+        this.$message.success('编辑成功！')
+        this.getGoodsList()
+      })
+      this.editdialogVisible = false
+    },
+
+    //是删除
     async handledelete(row) {
       const confirmResult = await this.$confirm(
         '此操作将永久删除该信息, 是否继续?',
