@@ -5,6 +5,10 @@ import './plugins/element.js'
 import './assets/css/global.css'
 import axios from 'axios'
 
+//顶部进度条
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
+
 
 import TreeTable from 'vue-table-with-tree-grid'
 
@@ -19,8 +23,15 @@ Vue.use(VueQuillEditor)
 
 //请求拦截器
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
+    //在request拦截器中，展示进度条NProgress.start()
 axios.interceptors.request.use(config => {
-    config.headers.Authorization = window.sessionStorage.getItem('token')
+        NProgress.start()
+        config.headers.Authorization = window.sessionStorage.getItem('token')
+        return config
+    })
+    //在response拦截器中，隐藏进度条NProgress.done()
+axios.interceptors.response.use(config => {
+    NProgress.done()
     return config
 })
 Vue.prototype.$http = axios
